@@ -1,0 +1,54 @@
+{
+  "build": {
+    "distDir": "../dist",
+    "devPath": "../dist",
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "Citadel",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "notification": {
+        "all": true
+      },
+      "shell": {
+        "open": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "identifier": "com.citadel.focus",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "targets": ["dmg", "app"],
+      "category": "Productivity",
+      "shortDescription": "A Stoic focus timer",
+      "longDescription": "Sundial pomodoro timer, Stoic reflections, WOOP planning log, and to-do ledger."
+    },
+    "windows": [
+      {
+        "title": "Citadel",
+        "width": 480,
+        "height": 920,
+        "minWidth": 400,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  }
+}

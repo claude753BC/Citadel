@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CITADEL — a room for focus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=EB+Garamond:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --stone:#17181a;
+    --stone-2:#1f2123;
+    --stone-3:#292b2e;
+    --parchment:#ece4cf;
+    --parchment-dim:#a89f8a;
+    --bronze:#b0873f;
+    --bronze-bright:#d9ae5e;
+    --patina:#5c7d72;
+    --patina-dim:#3c5049;
+    --oxblood:#8b3a3a;
+    --marble:#f5f1e6;
+    --line: rgba(236,228,207,0.12);
+    --font-display: 'Cormorant Garamond', 'Iowan Old Style', Palatino, 'Palatino Linotype', Georgia, serif;
+    --font-body: 'EB Garamond', Palatino, 'Palatino Linotype', Georgia, serif;
+    --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(176,135,63,0.10), transparent 55%),
+      radial-gradient(ellipse at 85% 100%, rgba(92,125,114,0.10), transparent 50%),
+      var(--stone);
+    color:var(--parchment);
+    font-family:var(--font-body);
+    font-size:17px;
+    line-height:1.5;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    opacity:0.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  a{color:var(--bronze-bright);}
+  button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--bronze-bright); outline-offset:3px;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  .wrap{position:relative; z-index:1; max-width:760px; margin:0 auto; padding:48px 24px 80px;}
+
+  /* ---------- Top clock ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    color:var(--bronze); margin-bottom:34px;
+  }
+  .topbar-clock{
+    font-family:var(--font-mono); font-size:0.95rem; letter-spacing:0.16em;
+    color:var(--bronze-bright);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{text-align:center; margin-bottom:56px;}
+  .hero-art{width:180px; height:auto; margin:0 auto 18px; display:block;}
+  .wordmark{
+    font-family:var(--font-display); font-weight:600; letter-spacing:0.14em;
+    font-size:2.6rem; margin:0; color:var(--marble);
+  }
+  .tagline{
+    font-family:var(--font-body); font-style:italic; color:var(--parchment-dim);
+    letter-spacing:0.02em; margin:8px 0 22px; font-size:1.02rem;
+  }
+  .hero-quote{
+    font-family:var(--font-display); font-style:italic; font-size:1.28rem;
+    color:var(--parchment); max-width:520px; margin:0 auto; line-height:1.5;
+  }
+  .hero-quote cite{
+    display:block; font-style:normal; font-family:var(--font-body); font-size:0.85rem;
+    letter-spacing:0.12em; text-transform:uppercase; color:var(--bronze-bright); margin-top:12px;
+  }
+
+  /* ---------- Panels ---------- */
+  .panel{
+    background:linear-gradient(180deg, var(--stone-2), var(--stone-2) 60%, var(--stone-3));
+    border:1px solid var(--line); border-radius:6px;
+    padding:32px 28px; margin-bottom:24px;
+    position:relative;
+  }
+  .panel-eyebrow{
+    font-size:0.75rem; letter-spacing:0.22em; text-transform:uppercase;
+    color:var(--patina); margin:0 0 4px;
+  }
+  .panel-title{
+    font-family:var(--font-display); font-weight:600; font-size:1.5rem; margin:0 0 20px; color:var(--marble);
+  }
+
+  /* ---------- Timer / Sundial ---------- */
+  #timer.panel.is-running{
+    box-shadow: inset 0 0 0 1px rgba(176,135,63,0.35), 0 0 40px -10px rgba(176,135,63,0.15);
+  }
+  .timer-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px;}
+  .gear-btn{
+    background:none; border:1px solid var(--line); color:var(--parchment-dim);
+    width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem;
+    display:flex; align-items:center; justify-content:center; transition:border-color .2s, color .2s;
+  }
+  .gear-btn:hover{border-color:var(--bronze); color:var(--bronze-bright);}
+
+  .dial-area{display:flex; flex-direction:column; align-items:center; margin-top:8px;}
+  .dial-svg{width:min(280px, 78vw); height:auto;}
+  .dial-time{
+    font-family:var(--font-mono); font-size:2.6rem; letter-spacing:0.02em; fill:var(--marble);
+  }
+  .dial-phase{
+    font-family:var(--font-body); font-size:0.72rem; letter-spacing:0.24em; fill:var(--bronze-bright);
+    text-transform:uppercase;
+  }
+
+  .phase-row{display:flex; gap:10px; margin:22px 0 6px; flex-wrap:wrap; justify-content:center;}
+  .phase-pill{
+    border:1px solid var(--line); background:transparent; color:var(--parchment-dim);
+    font-family:var(--font-body); font-size:0.82rem; letter-spacing:0.06em;
+    padding:6px 14px; border-radius:20px; cursor:pointer; transition:all .2s;
+  }
+  .phase-pill[aria-pressed="true"]{border-color:var(--bronze); color:var(--bronze-bright); background:rgba(176,135,63,0.08);}
+
+  .controls-row{display:flex; gap:12px; justify-content:center; margin-top:18px; flex-wrap:wrap;}
+  .btn{
+    font-family:var(--font-body); font-size:0.95rem; letter-spacing:0.04em;
+    padding:10px 26px; border-radius:3px; cursor:pointer; transition:all .2s; border:1px solid var(--bronze);
+  }
+  .btn-primary{background:var(--bronze); color:var(--stone); border-color:var(--bronze); font-weight:600;}
+  .btn-primary:hover{background:var(--bronze-bright); border-color:var(--bronze-bright);}
+  .btn-ghost{background:transparent; color:var(--parchment); border-color:var(--line);}
+  .btn-ghost:hover{border-color:var(--parchment-dim);}
+  .hint{text-align:center; font-size:0.78rem; color:var(--parchment-dim); margin-top:14px; letter-spacing:0.02em;}
+  .hint kbd{border:1px solid var(--line); border-radius:3px; padding:1px 6px; font-family:var(--font-mono);}
+
+  /* ---------- Settings ---------- */
+  .settings{
+    margin-top:22px; padding-top:22px; border-top:1px solid var(--line);
+    display:none;
+  }
+  .settings.open{display:block;}
+  .settings-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px 20px;}
+  .field label{display:block; font-size:0.76rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--parchment-dim); margin-bottom:6px;}
+  .field input[type="number"]{
+    width:100%; background:var(--stone); border:1px solid var(--line); color:var(--parchment);
+    padding:9px 10px; border-radius:3px; font-family:var(--font-mono); font-size:0.95rem;
+  }
+  .toggle-row{display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line);}
+  .toggle-row:last-of-type{border-bottom:none;}
+  .toggle-row span{font-size:0.92rem; color:var(--parchment);}
+  .switch{position:relative; width:42px; height:24px; flex-shrink:0;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; inset:0; background:var(--stone-3); border:1px solid var(--line); border-radius:20px; cursor:pointer; transition:.2s;}
+  .slider::before{content:""; position:absolute; width:16px; height:16px; left:3px; top:2px; background:var(--parchment-dim); border-radius:50%; transition:.2s;}
+  .switch input:checked + .slider{background:rgba(176,135,63,0.25); border-color:var(--bronze);}
+  .switch input:checked + .slider::before{transform:translateX(18px); background:var(--bronze-bright);}
+  .settings-actions{display:flex; gap:12px; margin-top:20px; justify-content:flex-end;}
+
+  /* ---------- Wisdom ---------- */
+  .quote-filter{display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap;}
+  .chip{
+    border:1px solid var(--line); background:transparent; color:var(--parchment-dim);
+    font-size:0.76rem; letter-spacing:0.08em; text-transform:uppercase; padding:5px 12px;
+    border-radius:16px; cursor:pointer; transition:all .2s;
+  }
+  .chip[aria-pressed="true"]{border-color:var(--patina); color:var(--patina); background:rgba(92,125,114,0.10);}
+  blockquote.wisdom-quote{
+    margin:0; font-family:var(--font-display); font-style:italic; font-size:1.4rem;
+    color:var(--parchment); line-height:1.55; min-height:110px;
+  }
+  .wisdom-source{
+    display:flex; justify-content:space-between; align-items:baseline; margin-top:16px;
+    font-size:0.85rem; color:var(--bronze-bright); letter-spacing:0.03em;
+  }
+  .wisdom-source .school{color:var(--patina); font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase;}
+  .wisdom-actions{margin-top:20px;}
+
+  /* ---------- Soundscapes ---------- */
+  .tabs{display:flex; gap:6px; margin-bottom:20px; border-bottom:1px solid var(--line);}
+  .tab{
+    background:none; border:none; color:var(--parchment-dim); font-family:var(--font-body);
+    font-size:0.95rem; padding:9px 4px; margin-right:22px; cursor:pointer; position:relative; letter-spacing:0.02em;
+  }
+  .tab::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:transparent;}
+  .tab[aria-selected="true"]{color:var(--marble);}
+  .tab[aria-selected="true"]::after{background:var(--bronze);}
+  .track-card{display:flex; gap:16px; align-items:center; padding:14px 0; border-bottom:1px solid var(--line);}
+  .track-card:last-of-type{border-bottom:none;}
+  .track-thumb{width:96px; height:64px; object-fit:cover; border-radius:3px; border:1px solid var(--line); flex-shrink:0; background:var(--stone);}
+  .track-meta{flex:1; min-width:0;}
+  .track-title{font-size:0.98rem; color:var(--parchment); margin:0 0 4px;}
+  .track-sub{font-size:0.78rem; color:var(--parchment-dim); margin:0;}
+  .track-play{
+    flex-shrink:0; font-size:0.82rem; padding:7px 16px; border-radius:3px; border:1px solid var(--bronze);
+    color:var(--bronze-bright); text-decoration:none; letter-spacing:0.03em; transition:all .2s;
+  }
+  .track-play:hover{background:var(--bronze); color:var(--stone);}
+  .more-link{display:inline-block; margin-top:16px; font-size:0.85rem; color:var(--patina);}
+  .more-link:hover{color:var(--bronze-bright);}
+
+  /* ---------- Stats ---------- */
+  .stats-strip{
+    display:flex; justify-content:center; gap:36px; flex-wrap:wrap; text-align:center;
+    padding:20px 0 0; color:var(--parchment-dim); font-size:0.85rem; letter-spacing:0.03em;
+  }
+  .stat-num{display:block; font-family:var(--font-display); font-size:1.6rem; color:var(--marble); font-weight:600;}
+
+  footer.note{text-align:center; color:var(--parchment-dim); font-size:0.78rem; margin-top:36px; line-height:1.7;}
+
+  /* ---------- WOOP planning log ---------- */
+  .method-note{font-size:0.85rem; color:var(--parchment-dim); line-height:1.6; margin:-6px 0 22px; max-width:560px;}
+  .woop-form{display:flex; flex-direction:column; gap:16px;}
+  .woop-field label{display:block; font-size:0.76rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--patina); margin-bottom:6px;}
+  .woop-field input[type="text"], .woop-field textarea{
+    width:100%; background:var(--stone); border:1px solid var(--line); color:var(--parchment);
+    padding:10px 12px; border-radius:3px; font-family:var(--font-body); font-size:0.98rem; resize:vertical;
+  }
+  .woop-field input[type="text"]:focus, .woop-field textarea:focus{border-color:var(--bronze);}
+  .woop-preview{
+    font-family:var(--font-display); font-style:italic; color:var(--bronze-bright);
+    font-size:1.05rem; margin:4px 0 0; padding:12px 14px; background:rgba(176,135,63,0.06);
+    border-left:2px solid var(--bronze); border-radius:2px;
+  }
+  .woop-log{margin-top:26px; max-height:420px; overflow-y:auto; display:flex; flex-direction:column; gap:14px;}
+  .woop-entry{border:1px solid var(--line); border-radius:4px; padding:14px 16px; background:var(--stone);}
+  .woop-entry-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .woop-entry-date{font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--parchment-dim);}
+  .woop-entry-wish{font-family:var(--font-display); font-size:1.1rem; color:var(--marble); margin:0 0 6px; font-weight:600;}
+  .woop-entry-outcome{font-size:0.88rem; color:var(--parchment-dim); font-style:italic; margin:0 0 8px;}
+  .woop-entry-plan{font-size:0.9rem; color:var(--patina); margin:0;}
+  .entry-del{background:none; border:none; color:var(--parchment-dim); font-size:1.2rem; line-height:1; cursor:pointer; padding:0 4px;}
+  .entry-del:hover{color:var(--oxblood);}
+  .empty-note{color:var(--parchment-dim); font-size:0.9rem; font-style:italic;}
+
+  /* ---------- To-do ledger ---------- */
+  .todo-input-row{display:flex; gap:10px; margin-bottom:18px;}
+  .todo-input-row input{
+    flex:1; background:var(--stone); border:1px solid var(--line); color:var(--parchment);
+    padding:10px 12px; border-radius:3px; font-family:var(--font-body); font-size:0.98rem;
+  }
+  .todo-input-row input:focus{border-color:var(--bronze);}
+  .todo-list{display:flex; flex-direction:column;}
+  .todo-item{display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line);}
+  .todo-item:last-child{border-bottom:none;}
+  .todo-check{position:relative; display:flex; align-items:center; cursor:pointer;}
+  .todo-check input{position:absolute; opacity:0; width:20px; height:20px; margin:0; cursor:pointer;}
+  .todo-box{width:18px; height:18px; border:1px solid var(--bronze); border-radius:2px; display:inline-block; position:relative; flex-shrink:0;}
+  .todo-check input:checked + .todo-box{background:var(--bronze);}
+  .todo-check input:checked + .todo-box::after{content:"\2713"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--stone);}
+  .todo-text{flex:1; font-size:0.98rem; color:var(--parchment);}
+  .todo-item.done .todo-text{color:var(--parchment-dim); text-decoration:line-through;}
+  .ledger-footer{display:flex; justify-content:space-between; align-items:center; margin-top:14px; font-size:0.8rem; color:var(--parchment-dim);}
+  .more-link-btn{background:none; border:none; color:var(--patina); font-size:0.8rem; cursor:pointer; letter-spacing:0.02em;}
+  .more-link-btn:hover{color:var(--bronze-bright);}
+
+  @media (max-width:560px){
+    .settings-grid{grid-template-columns:1fr;}
+    .wordmark{font-size:2.1rem;}
+    .track-thumb{width:76px; height:52px;}
+    .woop-log{max-height:320px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar" role="status" aria-label="current time">
+    <svg class="topbar-icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      <g stroke="currentColor" stroke-width="1.4">
+        <line x1="12" y1="1" x2="12" y2="4"/>
+        <line x1="12" y1="20" x2="12" y2="23"/>
+        <line x1="1" y1="12" x2="4" y2="12"/>
+        <line x1="20" y1="12" x2="23" y2="12"/>
+      </g>
+    </svg>
+    <span class="topbar-clock" id="clockTime">00:00:00</span>
+  </div>
+
+  <header class="hero">
+    <svg class="hero-art" viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#d9ae5e" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#d9ae5e" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="100" cy="62" r="46" fill="url(#sunGrad)"/>
+      <circle cx="100" cy="62" r="20" fill="none" stroke="#b0873f" stroke-width="1.4"/>
+      <g stroke="#b0873f" stroke-width="1.2" opacity="0.85">
+        <line x1="100" y1="18" x2="100" y2="30"/>
+        <line x1="100" y1="94" x2="100" y2="106"/>
+        <line x1="56" y1="62" x2="68" y2="62"/>
+        <line x1="132" y1="62" x2="144" y2="62"/>
+        <line x1="69" y1="31" x2="77" y2="39"/>
+        <line x1="123" y1="85" x2="131" y2="93"/>
+        <line x1="131" y1="31" x2="123" y2="39"/>
+        <line x1="77" y1="85" x2="69" y2="93"/>
+      </g>
+      <g fill="none" stroke="#ece4cf" stroke-width="1.6" opacity="0.9">
+        <path d="M40 132 V78 M40 78 L34 70 H46 Z"/>
+        <path d="M100 132 V78 M100 78 L94 70 H106 Z"/>
+        <path d="M160 132 V78 M160 78 L154 70 H166 Z"/>
+      </g>
+      <line x1="24" y1="132" x2="176" y2="132" stroke="#ece4cf" stroke-width="2"/>
+      <path d="M20 122 Q35 108 20 96 Q10 108 20 122 Z M180 122 Q165 108 180 96 Q190 108 180 122 Z" fill="none" stroke="#5c7d72" stroke-width="1.3" opacity="0.8"/>
+    </svg>
+    <h1 class="wordmark">CITADEL</h1>
+    <p class="tagline">build your inner citadel</p>
+    <blockquote class="hero-quote">
+      "At dawn, when you have trouble getting out of bed, tell yourself: I am rising to do the work of a human being."
+      <cite>Marcus Aurelius, Meditations</cite>
+    </blockquote>
+  </header>
+
+  <main>
+
+    <section class="panel" id="timer">
+      <div class="timer-head">
+        <div>
+          <p class="panel-eyebrow">the work</p>
+          <h2 class="panel-title" style="margin-bottom:0;">Sundial Timer</h2>
+        </div>
+        <button class="gear-btn" id="settingsToggle" aria-expanded="false" aria-controls="settingsPanel" title="Configure timer">&#9881;</button>
+      </div>
+
+      <div class="dial-area">
+        <svg class="dial-svg" id="dialSvg" viewBox="0 0 300 300" role="img" aria-label="Session timer">
+          <circle cx="150" cy="150" r="140" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+          <circle cx="150" cy="150" r="130" fill="var(--stone-2)"/>
+          <path id="sweepPath" d="" fill="var(--bronze)" opacity="0.5"></path>
+          <circle cx="150" cy="150" r="130" fill="none" stroke="var(--line)" stroke-width="1"/>
+          <g id="ticksGroup"></g>
+          <g id="numeralsGroup" font-family="var(--font-display)" font-size="13" fill="var(--parchment-dim)" text-anchor="middle"></g>
+          <polygon points="150,18 142,34 158,34" fill="var(--bronze-bright)"/>
+          <text x="150" y="142" text-anchor="middle" class="dial-phase" id="phaseLabel">FOCUS</text>
+          <text x="150" y="185" text-anchor="middle" class="dial-time" id="timeLabel">25:00</text>
+          <text x="150" y="205" text-anchor="middle" font-family="var(--font-body)" font-size="11" fill="var(--parchment-dim)" id="cycleLabel">session 1</text>
+        </svg>
+
+        <div class="phase-row" role="group" aria-label="Choose phase">
+          <button class="phase-pill" data-mode="focus" aria-pressed="true">Focus</button>
+          <button class="phase-pill" data-mode="short" aria-pressed="false">Short Rest</button>
+          <button class="phase-pill" data-mode="long" aria-pressed="false">Long Rest</button>
+        </div>
+
+        <div class="controls-row">
+          <button class="btn btn-primary" id="startBtn">Begin</button>
+          <button class="btn btn-ghost" id="resetBtn">Reset</button>
+        </div>
+        <p class="hint">press <kbd>space</kbd> to begin or pause</p>
+      </div>
+
+      <div class="settings" id="settingsPanel">
+        <div class="settings-grid">
+          <div class="field"><label for="cfgFocus">Focus (minutes)</label><input type="number" id="cfgFocus" min="1" max="90"></div>
+          <div class="field"><label for="cfgShort">Short rest (minutes)</label><input type="number" id="cfgShort" min="1" max="60"></div>
+          <div class="field"><label for="cfgLong">Long rest (minutes)</label><input type="number" id="cfgLong" min="1" max="90"></div>
+          <div class="field"><label for="cfgCycle">Sessions before long rest</label><input type="number" id="cfgCycle" min="1" max="12"></div>
+        </div>
+        <div style="margin-top:18px;">
+          <div class="toggle-row"><span>Sound at end of session</span>
+            <label class="switch"><input type="checkbox" id="cfgSound"><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row"><span>Continue automatically to next phase</span>
+            <label class="switch"><input type="checkbox" id="cfgAuto"><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row"><span>Browser notification at end of session</span>
+            <label class="switch"><input type="checkbox" id="cfgNotify"><span class="slider"></span></label>
+          </div>
+        </div>
+        <div class="settings-actions">
+          <button class="btn btn-ghost" id="settingsCancel">Close</button>
+          <button class="btn btn-primary" id="settingsSave">Save</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="wisdom">
+      <p class="panel-eyebrow">the mind</p>
+      <h2 class="panel-title">A Reflection</h2>
+      <div class="quote-filter" role="group" aria-label="Filter reflections">
+        <button class="chip" data-filter="all" aria-pressed="true">All Voices</button>
+        <button class="chip" data-filter="stoic" aria-pressed="false">Stoics Only</button>
+        <button class="chip" data-filter="existentialist" aria-pressed="false">Existentialist</button>
+        <button class="chip" data-filter="taoist" aria-pressed="false">Taoist</button>
+        <button class="chip" data-filter="buddhist" aria-pressed="false">Buddhist</button>
+        <button class="chip" data-filter="enlightenment" aria-pressed="false">Enlightenment</button>
+        <button class="chip" data-filter="hitchens" aria-pressed="false">Hitchens</button>
+        <button class="chip" data-filter="modern" aria-pressed="false">Modern</button>
+      </div>
+      <blockquote class="wisdom-quote" id="quoteText" aria-live="polite">Loading…</blockquote>
+      <div class="wisdom-source">
+        <span id="quoteAuthor"></span>
+        <span class="school" id="quoteSchool"></span>
+      </div>
+      <div class="wisdom-actions">
+        <button class="btn btn-ghost" id="nextQuoteBtn">Another Reflection</button>
+      </div>
+    </section>
+
+    <section class="panel" id="woop">
+      <p class="panel-eyebrow">the plan</p>
+      <h2 class="panel-title">Wish, Outcome, Obstacle, Plan</h2>
+      <p class="method-note">Mental contrasting with implementation intentions — name what you want, feel the outcome, name what in <em>you</em> gets in the way, then decide in advance what you'll do about it.</p>
+
+      <div class="woop-form">
+        <div class="woop-field">
+          <label for="woopWish">Wish</label>
+          <input type="text" id="woopWish" placeholder="A specific, achievable goal — e.g. finish the Q3 draft">
+        </div>
+        <div class="woop-field">
+          <label for="woopOutcome">Outcome</label>
+          <textarea id="woopOutcome" rows="2" placeholder="Picture the best result vividly — how it feels, what changes"></textarea>
+        </div>
+        <div class="woop-field">
+          <label for="woopObstacle">Obstacle</label>
+          <input type="text" id="woopObstacle" placeholder="Your inner obstacle — a habit, fear, or distraction, not an external one">
+        </div>
+        <div class="woop-field">
+          <label for="woopPlanAction">Plan — then I will…</label>
+          <input type="text" id="woopPlanAction" placeholder="The action you'll take when the obstacle shows up">
+        </div>
+        <p class="woop-preview" id="woopPreview">If … happens, then I will …</p>
+        <div class="wisdom-actions">
+          <button class="btn btn-primary" id="woopSave">Save to the Log</button>
+        </div>
+      </div>
+
+      <div class="woop-log" id="woopLog"></div>
+    </section>
+
+    <section class="panel" id="ledger">
+      <p class="panel-eyebrow">the tasks</p>
+      <h2 class="panel-title">Today's Ledger</h2>
+      <div class="todo-input-row">
+        <input type="text" id="todoInput" placeholder="Add a task…" aria-label="Add a task">
+        <button class="btn btn-primary" id="todoAddBtn">Add</button>
+      </div>
+      <div class="todo-list" id="todoList"></div>
+      <div class="ledger-footer">
+        <span id="todoCount"></span>
+        <button class="more-link-btn" id="todoClearDone">Clear completed</button>
+      </div>
+    </section>
+
+    <section class="panel" id="soundscapes">
+      <p class="panel-eyebrow">the room</p>
+      <h2 class="panel-title">Soundscapes</h2>
+      <div class="tabs" role="tablist" aria-label="Soundscape category">
+        <button class="tab" role="tab" data-tab="lofi" aria-selected="true">Lofi</button>
+        <button class="tab" role="tab" data-tab="lofiClassical" aria-selected="false">Lofi Classical</button>
+        <button class="tab" role="tab" data-tab="classical" aria-selected="false">Classical</button>
+      </div>
+      <div id="tabContent"></div>
+    </section>
+
+    <section class="panel" id="stats">
+      <div class="stats-strip">
+        <div><span class="stat-num" id="statToday">0</span>sessions today</div>
+        <div><span class="stat-num" id="statTotal">0</span>total sessions</div>
+        <div><span class="stat-num" id="statStreak">0</span>day streak</div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="note">
+    Settings and session counts are saved to this device. Soundscape links open on YouTube in your browser.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- Quotes ---------------- */
+  var QUOTES = [
+    {t:"You have power over your mind — not outside events. Realize this, and you will find strength.", a:"Marcus Aurelius", s:"Meditations", school:"stoic"},
+    {t:"The impediment to action advances action. What stands in the way becomes the way.", a:"Marcus Aurelius", s:"Meditations", school:"stoic"},
+    {t:"Waste no more time arguing about what a good man should be. Be one.", a:"Marcus Aurelius", s:"Meditations", school:"stoic"},
+    {t:"Confine yourself to the present.", a:"Marcus Aurelius", s:"Meditations", school:"stoic"},
+    {t:"How much trouble he avoids who does not look to see what his neighbor says, does, or thinks.", a:"Marcus Aurelius", s:"Meditations", school:"stoic"},
+    {t:"Very little is needed to make a happy life; it is all within yourself, in your way of thinking.", a:"Marcus Aurelius", s:"Meditations", school:"stoic"},
+    {t:"When you arise in the morning, think of what a precious privilege it is to be alive — to breathe, to think, to enjoy, to love.", a:"Marcus Aurelius", s:"Meditations", school:"stoic"},
+    {t:"If it is not right, do not do it. If it is not true, do not say it.", a:"Marcus Aurelius", s:"Meditations", school:"stoic"},
+    {t:"It is not that we have a short time to live, but that we waste a great deal of it.", a:"Seneca", s:"On the Shortness of Life", school:"stoic"},
+    {t:"We suffer more often in imagination than in reality.", a:"Seneca", s:"Letters to Lucilius", school:"stoic"},
+    {t:"He who is brave is free.", a:"Seneca", s:"Letters to Lucilius", school:"stoic"},
+    {t:"As is a tale, so is life: not how long it is, but how good it is, is what matters.", a:"Seneca", s:"Letters to Lucilius", school:"stoic"},
+    {t:"While we wait for life, life passes.", a:"Seneca", s:"Letters to Lucilius", school:"stoic"},
+    {t:"Begin at once to live, and count each separate day as a separate life.", a:"Seneca", s:"Letters to Lucilius", school:"stoic"},
+    {t:"Difficulties strengthen the mind, as labor does the body.", a:"Seneca", s:"On Providence", school:"stoic"},
+    {t:"It's not what happens to you, but how you react to it that matters.", a:"Epictetus", s:"Enchiridion", school:"stoic"},
+    {t:"No man is free who is not master of himself.", a:"Epictetus", s:"Discourses", school:"stoic"},
+    {t:"Man is disturbed not by things, but by the views he takes of them.", a:"Epictetus", s:"Enchiridion", school:"stoic"},
+    {t:"First say to yourself what you would be; and then do what you have to do.", a:"Epictetus", s:"Discourses", school:"stoic"},
+    {t:"He is a wise man who does not grieve for the things which he has not, but rejoices for those which he has.", a:"Epictetus", s:"Fragments", school:"stoic"},
+    {t:"Circumstances do not make the man — they only reveal him to himself.", a:"Epictetus", s:"Discourses", school:"stoic"},
+    {t:"Only the educated are free.", a:"Epictetus", s:"Discourses", school:"stoic"},
+    {t:"Fate leads the willing, and drags along the reluctant.", a:"Cleanthes", s:"Hymn to Zeus", school:"stoic"},
+    {t:"Well-being is realized by small steps, but is truly no small thing.", a:"Zeno of Citium", s:"Fragments", school:"stoic"},
+    {t:"If you accomplish something good through hard work, the labor passes quickly, but the good endures; if you do something shameful in pursuit of pleasure, the pleasure passes quickly, but the shame endures.", a:"Musonius Rufus", s:"Lectures", school:"stoic"},
+    {t:"We are what we repeatedly do. Excellence, then, is not an act, but a habit.", a:"Aristotle", s:"Nicomachean Ethics", school:"classical"},
+    {t:"Knowing yourself is the beginning of all wisdom.", a:"Aristotle", s:"attributed", school:"classical"},
+    {t:"The energy of the mind is the essence of life.", a:"Aristotle", s:"attributed", school:"classical"},
+    {t:"The beginning is the most important part of the work.", a:"Plato", s:"The Republic", school:"classical"},
+    {t:"The unexamined life is not worth living.", a:"Socrates", s:"Plato's Apology", school:"classical"},
+    {t:"I cannot teach anybody anything. I can only make them think.", a:"Socrates", s:"attributed", school:"classical"},
+    {t:"True wisdom comes to each of us when we realize how little we understand about life, ourselves, and the world around us.", a:"Socrates", s:"attributed", school:"classical"},
+    {t:"A room without books is like a body without a soul.", a:"Cicero", s:"attributed", school:"classical"},
+    {t:"While there is life, there is hope.", a:"Cicero", s:"Letters to Atticus", school:"classical"},
+    {t:"Nothing is so strong as gentleness, nothing so gentle as real strength.", a:"Cicero", s:"attributed", school:"classical"},
+    {t:"No man ever steps in the same river twice, for it's not the same river and he's not the same man.", a:"Heraclitus", s:"Fragments", school:"classical"},
+    {t:"Character is destiny.", a:"Heraclitus", s:"Fragments", school:"classical"},
+    {t:"Silence is better than unmeaning words.", a:"Pythagoras", s:"attributed", school:"classical"},
+    {t:"Do not spoil what you have by desiring what you have not; remember that what you now have was once among the things you only hoped for.", a:"Epicurus", s:"Letter to Menoeceus", school:"classical"},
+    {t:"Not what we have, but what we enjoy, constitutes our abundance.", a:"Epicurus", s:"Fragments", school:"classical"},
+
+    {t:"Existence precedes essence.", a:"Jean-Paul Sartre", s:"Existentialism Is a Humanism", school:"existentialist"},
+    {t:"Man is condemned to be free.", a:"Jean-Paul Sartre", s:"Being and Nothingness", school:"existentialist"},
+    {t:"In the depth of winter, I finally learned that within me there lay an invincible summer.", a:"Albert Camus", s:"Return to Tipasa", school:"existentialist"},
+    {t:"The struggle itself toward the heights is enough to fill a man's heart. One must imagine Sisyphus happy.", a:"Albert Camus", s:"The Myth of Sisyphus", school:"existentialist"},
+    {t:"There is but one truly serious philosophical problem, and that is suicide.", a:"Albert Camus", s:"The Myth of Sisyphus", school:"existentialist"},
+    {t:"Life can only be understood backwards; but it must be lived forwards.", a:"Søren Kierkegaard", s:"Journals", school:"existentialist"},
+    {t:"Anxiety is the dizziness of freedom.", a:"Søren Kierkegaard", s:"The Concept of Anxiety", school:"existentialist"},
+    {t:"He who has a why to live can bear almost any how.", a:"Friedrich Nietzsche", s:"Twilight of the Idols", school:"existentialist"},
+    {t:"That which does not kill us makes us stronger.", a:"Friedrich Nietzsche", s:"Twilight of the Idols", school:"existentialist"},
+    {t:"One is not born, but rather becomes, a woman.", a:"Simone de Beauvoir", s:"The Second Sex", school:"existentialist"},
+    {t:"When we are no longer able to change a situation, we are challenged to change ourselves.", a:"Viktor Frankl", s:"Man's Search for Meaning", school:"existentialist"},
+
+    {t:"A journey of a thousand miles begins with a single step.", a:"Lao Tzu", s:"Tao Te Ching", school:"taoist"},
+    {t:"Nature does not hurry, yet everything is accomplished.", a:"Lao Tzu", s:"attributed", school:"taoist"},
+    {t:"When I let go of what I am, I become what I might be.", a:"Lao Tzu", s:"attributed", school:"taoist"},
+    {t:"The softest things in the world overcome the hardest things in the world.", a:"Lao Tzu", s:"Tao Te Ching", school:"taoist"},
+    {t:"Knowing others is wisdom, knowing yourself is enlightenment.", a:"Lao Tzu", s:"Tao Te Ching", school:"taoist"},
+    {t:"Flow with whatever may happen, and let your mind be free: stay centered by accepting whatever you are doing. This is the ultimate.", a:"Zhuangzi", s:"attributed", school:"taoist"},
+    {t:"The wise man knows that it is better to sit on the banks of a remote mountain stream than to be emperor of the whole world.", a:"Zhuangzi", s:"attributed", school:"taoist"},
+
+    {t:"The mind is everything. What you think you become.", a:"The Buddha", s:"Dhammapada", school:"buddhist"},
+    {t:"Peace comes from within. Do not seek it without.", a:"The Buddha", s:"attributed", school:"buddhist"},
+    {t:"You yourself, as much as anybody in the entire universe, deserve your love and affection.", a:"The Buddha", s:"attributed", school:"buddhist"},
+    {t:"Three things cannot be long hidden: the sun, the moon, and the truth.", a:"The Buddha", s:"Dhammapada", school:"buddhist"},
+    {t:"Feelings come and go like clouds in a windy sky. Conscious breathing is my anchor.", a:"Thich Nhat Hanh", s:"attributed", school:"buddhist"},
+    {t:"The present moment is the only moment available to us, and it is the door to all moments.", a:"Thich Nhat Hanh", s:"Peace Is Every Step", school:"buddhist"},
+    {t:"To study the self is to forget the self.", a:"Dogen", s:"Genjokoan", school:"buddhist"},
+    {t:"In the beginner's mind there are many possibilities, but in the expert's mind there are few.", a:"Shunryu Suzuki", s:"Zen Mind, Beginner's Mind", school:"buddhist"},
+    {t:"Happiness is not something ready-made. It comes from your own actions.", a:"Dalai Lama XIV", s:"attributed", school:"buddhist"},
+    {t:"Nothing ever goes away until it has taught us what we need to know.", a:"Pema Chödrön", s:"When Things Fall Apart", school:"buddhist"},
+
+    {t:"Dare to know! Have the courage to use your own understanding.", a:"Immanuel Kant", s:"An Answer to the Question: What is Enlightenment?", school:"enlightenment"},
+    {t:"Act only according to that maxim whereby you can at the same time will that it should become a universal law.", a:"Immanuel Kant", s:"Groundwork of the Metaphysics of Morals", school:"enlightenment"},
+    {t:"Common sense is not so common.", a:"Voltaire", s:"Dictionnaire philosophique", school:"enlightenment"},
+    {t:"Judge a man by his questions rather than his answers.", a:"Voltaire", s:"attributed", school:"enlightenment"},
+    {t:"No man's knowledge here can go beyond his experience.", a:"John Locke", s:"An Essay Concerning Human Understanding", school:"enlightenment"},
+    {t:"Man is born free, and everywhere he is in chains.", a:"Jean-Jacques Rousseau", s:"The Social Contract", school:"enlightenment"},
+    {t:"An investment in knowledge always pays the best interest.", a:"Benjamin Franklin", s:"attributed", school:"enlightenment"},
+    {t:"I do not wish women to have power over men, but over themselves.", a:"Mary Wollstonecraft", s:"A Vindication of the Rights of Woman", school:"enlightenment"},
+
+    {t:"That which can be asserted without evidence can also be dismissed without evidence.", a:"Christopher Hitchens", s:"God Is Not Great", school:"hitchens"},
+    {t:"Everyone has a book in them, and that, in most cases, is where it should stay.", a:"Christopher Hitchens", s:"attributed", school:"hitchens"},
+    {t:"The essence of the independent mind lies not in what it thinks, but in how it thinks.", a:"Christopher Hitchens", s:"attributed", school:"hitchens"},
+    {t:"Beware the irrational, however seductive. Shun the transcendent and all who invite you to subordinate or annihilate yourself.", a:"Christopher Hitchens", s:"Letters to a Young Contrarian", school:"hitchens"},
+    {t:"Our species is the accidental result of an interesting chemical process on a minor planet.", a:"Christopher Hitchens", s:"attributed", school:"hitchens"},
+
+    {t:"The whole problem with the world is that fools and fanatics are always so certain of themselves, and wiser people so full of doubts.", a:"Bertrand Russell", s:"attributed", school:"modern"},
+    {t:"To fear love is to fear life, and those who fear life are already three parts dead.", a:"Bertrand Russell", s:"attributed", school:"modern"},
+    {t:"The sad truth is that most evil is done by people who never make up their minds to be good or evil.", a:"Hannah Arendt", s:"attributed", school:"modern"},
+    {t:"No one has the right to obey.", a:"Hannah Arendt", s:"Responsibility and Judgment", school:"modern"},
+    {t:"Attention is the rarest and purest form of generosity.", a:"Simone Weil", s:"attributed", school:"modern"},
+    {t:"The only way to make sense out of change is to plunge into it, move with it, and join the dance.", a:"Alan Watts", s:"attributed", school:"modern"},
+    {t:"Our knowledge can only be finite, while our ignorance must necessarily be infinite.", a:"Karl Popper", s:"Conjectures and Refutations", school:"modern"},
+    {t:"Darkness cannot drive out darkness; only light can do that.", a:"Martin Luther King Jr.", s:"Strength to Love", school:"modern"},
+    {t:"Love is the extremely difficult realization that something other than oneself is real.", a:"Iris Murdoch", s:"attributed", school:"modern"}
+  ];
+
+  var currentFilter = "all";
+  var currentQuoteIdx = -1;
+
+  function weightedQuote(filter){
+    var pool = QUOTES.filter(function(q){ return filter === "all" ? true : q.school === filter; });
+    if (filter === "all"){
+      // emphasize stoics ~70% of the time even within "all"
+      var stoics = QUOTES.filter(function(q){ return q.school === "stoic"; });
+      var others = QUOTES.filter(function(q){ return q.school !== "stoic"; });
+      pool = (Math.random() < 0.7 && stoics.length) ? stoics : others;
+    }
+    var idx = Math.floor(Math.random() * pool.length);
+    return pool[idx];
+  }
+
+  var schoolLabels = {
+    stoic: "Stoic",
+    classical: "Classical",
+    existentialist: "Existentialist",
+    taoist: "Taoist",
+    buddhist: "Buddhist",
+    enlightenment: "Enlightenment",
+    hitchens: "Hitchens",
+    modern: "Modern"
+  };
+
+  function renderQuote(){
+    var q = weightedQuote(currentFilter);
+    document.getElementById("quoteText").textContent = "\u201C" + q.t + "\u201D";
+    document.getElementById("quoteAuthor").textContent = "— " + q.a + ", " + q.s;
+    document.getElementById("quoteSchool").textContent = schoolLabels[q.school] || q.school;
+  }
+
+  document.querySelectorAll(".chip").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll(".chip").forEach(function(b){ b.setAttribute("aria-pressed","false"); });
+      btn.setAttribute("aria-pressed","true");
+      currentFilter = btn.getAttribute("data-filter");
+      renderQuote();
+    });
+  });
+  document.getElementById("nextQuoteBtn").addEventListener("click", renderQuote);
+
+  /* ---------------- Soundscapes ---------------- */
+  var TRACKS = {
+    lofi: {
+      items: [
+        {title:"1990s Lofi City — A Cozy Balcony Between Two Times", sub:"Retro-Rhythm · lofi rain playlist", id:"TfWotiyXGfI"},
+        {title:"Lofi Girl Study Lofi Playlist", sub:"beats to study and relax to", id:"rFZHOHl-L8A"}
+      ],
+      search: "lofi hip hop radio"
+    },
+    lofiClassical: {
+      items: [
+        {title:"Lofi Classical Playlist", sub:"continuous classical-lofi radio", id:"staQKJfxwYc", extra:"&list=RDstaQKJfxwYc&start_radio=1"}
+      ],
+      search: "lofi classical piano radio"
+    },
+    classical: {
+      items: [
+        {title:"Classical Playlist", sub:"piano-led classical mix", id:"rifTkEXFb_U", extra:"&t=1264s"}
+      ],
+      search: "classical music radio 24/7"
+    }
+  };
+  var tabLabels = {lofi:"lofi", lofiClassical:"lofi classical", classical:"classical"};
+
+  function renderTab(tab){
+    var data = TRACKS[tab];
+    var html = "";
+    data.items.forEach(function(track){
+      var url = "https://www.youtube.com/watch?v=" + track.id + (track.extra || "");
+      var thumb = "https://img.youtube.com/vi/" + track.id + "/hqdefault.jpg";
+      html += '<div class="track-card">' +
+        '<img class="track-thumb" src="' + thumb + '" alt="" loading="lazy">' +
+        '<div class="track-meta"><p class="track-title">' + track.title + '</p><p class="track-sub">' + track.sub + '</p></div>' +
+        '<a class="track-play" href="' + url + '" target="_blank" rel="noopener">Play on YouTube</a>' +
+        '</div>';
+    });
+    var searchUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.search);
+    html += '<a class="more-link" href="' + searchUrl + '" target="_blank" rel="noopener">Browse more ' + tabLabels[tab] + ' radio on YouTube →</a>';
+    document.getElementById("tabContent").innerHTML = html;
+  }
+
+  document.querySelectorAll(".tab").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll(".tab").forEach(function(b){ b.setAttribute("aria-selected","false"); });
+      btn.setAttribute("aria-selected","true");
+      renderTab(btn.getAttribute("data-tab"));
+    });
+  });
+
+  /* ---------------- Storage (native desktop: localStorage) ---------------- */
+  function storeGet(key){
+    try{
+      var v = window.localStorage.getItem(key);
+      return Promise.resolve(v);
+    }catch(e){ return Promise.resolve(null); }
+  }
+  function storeSet(key, value){
+    try{ window.localStorage.setItem(key, value); }catch(e){}
+    return Promise.resolve(null);
+  }
+
+  /* ---------------- Timer ---------------- */
+  var DEFAULT_CONFIG = {focus:25, short:5, long:15, cycle:4, sound:true, auto:true, notify:false};
+  var config = Object.assign({}, DEFAULT_CONFIG);
+  var stats = {sessionsToday:0, totalSessions:0, streak:0, lastActiveDate:null, todayDate:null};
+
+  var mode = "focus";
+  var secondsLeft = config.focus * 60;
+  var totalSeconds = config.focus * 60;
+  var running = false;
+  var timerId = null;
+  var sessionInCycle = 1;
+
+  var dialSvg = document.getElementById("dialSvg");
+  var sweepPath = document.getElementById("sweepPath");
+  var timeLabel = document.getElementById("timeLabel");
+  var phaseLabel = document.getElementById("phaseLabel");
+  var cycleLabel = document.getElementById("cycleLabel");
+  var startBtn = document.getElementById("startBtn");
+  var resetBtn = document.getElementById("resetBtn");
+  var timerPanel = document.getElementById("timer");
+
+  function buildDialMarks(){
+    var ticksGroup = document.getElementById("ticksGroup");
+    var numeralsGroup = document.getElementById("numeralsGroup");
+    var roman = ["XII","I","II","III","IV","V","VI","VII","VIII","IX","X","XI"];
+    var cx = 150, cy = 150;
+    for (var i = 0; i < 60; i++){
+      var angle = i * 6;
+      var isHour = (i % 5 === 0);
+      var r1 = 130, r2 = isHour ? 116 : 123;
+      var rad = angle * Math.PI / 180;
+      var x1 = cx + r1 * Math.sin(rad), y1 = cy - r1 * Math.cos(rad);
+      var x2 = cx + r2 * Math.sin(rad), y2 = cy - r2 * Math.cos(rad);
+      var line = document.createElementNS("http://www.w3.org/2000/svg","line");
+      line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+      line.setAttribute("x2", x2); line.setAttribute("y2", y2);
+      line.setAttribute("stroke", isHour ? "var(--bronze)" : "var(--line)");
+      line.setAttribute("stroke-width", isHour ? "1.6" : "1");
+      ticksGroup.appendChild(line);
+    }
+    for (var h = 0; h < 12; h++){
+      var a = h * 30;
+      var rTxt = 100;
+      var radN = a * Math.PI / 180;
+      var xn = cx + rTxt * Math.sin(radN), yn = cy - rTxt * Math.cos(radN) + 4;
+      var txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+      txt.setAttribute("x", xn); txt.setAttribute("y", yn);
+      txt.textContent = roman[h];
+      numeralsGroup.appendChild(txt);
+    }
+  }
+  buildDialMarks();
+
+  function point(cx, cy, r, angleDeg){
+    var rad = angleDeg * Math.PI / 180;
+    return {x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad)};
+  }
+  function updateSweep(fraction){
+    var angle = Math.min(fraction, 0.9997) * 360;
+    if (angle <= 0){ sweepPath.setAttribute("d",""); return; }
+    var cx = 150, cy = 150, r = 130;
+    var p0 = point(cx, cy, r, 0);
+    var p1 = point(cx, cy, r, angle);
+    var largeArc = angle > 180 ? 1 : 0;
+    var d = "M " + cx + "," + cy + " L " + p0.x + "," + p0.y +
+      " A " + r + "," + r + " 0 " + largeArc + " 1 " + p1.x + "," + p1.y + " Z";
+    sweepPath.setAttribute("d", d);
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+  }
+  var phaseNames = {focus:"FOCUS", short:"SHORT REST", long:"LONG REST"};
+  var modeMinutesKey = {focus:"focus", short:"short", long:"long"};
+
+  function renderTimer(){
+    timeLabel.textContent = fmt(secondsLeft);
+    phaseLabel.textContent = phaseNames[mode];
+    cycleLabel.textContent = mode === "focus" ? ("session " + sessionInCycle + " of " + config.cycle) : "resting";
+    var elapsedFraction = 1 - (secondsLeft / totalSeconds);
+    updateSweep(elapsedFraction);
+    document.title = fmt(secondsLeft) + " · " + phaseNames[mode] + " · CITADEL";
+    document.querySelectorAll(".phase-pill").forEach(function(p){
+      p.setAttribute("aria-pressed", p.getAttribute("data-mode") === mode ? "true" : "false");
+    });
+  }
+
+  function setMode(newMode, resetTime){
+    mode = newMode;
+    totalSeconds = config[modeMinutesKey[newMode]] * 60;
+    if (resetTime !== false) secondsLeft = totalSeconds;
+    renderTimer();
+  }
+
+  function playBell(){
+    if (!config.sound) return;
+    try{
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var now = ctx.currentTime;
+      [523.25, 784.0].forEach(function(freq, i){
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.22, now + 0.03 + i*0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + i*0.05);
+        osc.stop(now + 1.9);
+      });
+    }catch(e){}
+  }
+
+  function notify(text){
+    if (!config.notify) return;
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "granted"){
+      new Notification("CITADEL", {body:text});
+    }
+  }
+
+  function todayStr(){
+    var d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
+  }
+
+  function recordSessionComplete(){
+    var today = todayStr();
+    if (stats.todayDate !== today){
+      var y = new Date(); y.setDate(y.getDate()-1);
+      var yStr = y.getFullYear() + "-" + (y.getMonth()+1) + "-" + y.getDate();
+      stats.streak = (stats.lastActiveDate === yStr) ? stats.streak + 1 : 1;
+      stats.sessionsToday = 0;
+      stats.todayDate = today;
+      stats.lastActiveDate = today;
+    } else if (stats.streak === 0){
+      stats.streak = 1;
+      stats.lastActiveDate = today;
+    }
+    stats.sessionsToday += 1;
+    stats.totalSessions += 1;
+    renderStats();
+    storeSet("citadel:stats", JSON.stringify(stats));
+  }
+
+  function renderStats(){
+    document.getElementById("statToday").textContent = stats.sessionsToday;
+    document.getElementById("statTotal").textContent = stats.totalSessions;
+    document.getElementById("statStreak").textContent = stats.streak;
+  }
+
+  function completePhase(){
+    playBell();
+    if (mode === "focus"){
+      recordSessionComplete();
+      renderQuote();
+      if (sessionInCycle >= config.cycle){
+        sessionInCycle = 1;
+        notify("Focus complete. Time for a long rest.");
+        setMode("long");
+      } else {
+        sessionInCycle += 1;
+        notify("Focus complete. Time for a short rest.");
+        setMode("short");
+      }
+    } else {
+      notify("Rest complete. Back to focus.");
+      setMode("focus");
+    }
+    running = false;
+    clearInterval(timerId);
+    timerPanel.classList.remove("is-running");
+    startBtn.textContent = "Begin";
+    if (config.auto){
+      startTimer();
+    }
+  }
+
+  function tick(){
+    secondsLeft -= 1;
+    if (secondsLeft <= 0){
+      secondsLeft = 0;
+      renderTimer();
+      completePhase();
+      return;
+    }
+    renderTimer();
+  }
+
+  function startTimer(){
+    if (running) return;
+    running = true;
+    timerPanel.classList.add("is-running");
+    startBtn.textContent = "Pause";
+    timerId = setInterval(tick, 1000);
+  }
+  function pauseTimer(){
+    running = false;
+    timerPanel.classList.remove("is-running");
+    startBtn.textContent = "Begin";
+    clearInterval(timerId);
+  }
+  function resetTimer(){
+    pauseTimer();
+    setMode(mode, true);
+  }
+
+  startBtn.addEventListener("click", function(){ running ? pauseTimer() : startTimer(); });
+  resetBtn.addEventListener("click", resetTimer);
+
+  document.querySelectorAll(".phase-pill").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      pauseTimer();
+      setMode(btn.getAttribute("data-mode"), true);
+    });
+  });
+
+  document.addEventListener("keydown", function(e){
+    if (e.code === "Space" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "BUTTON"){
+      e.preventDefault();
+      running ? pauseTimer() : startTimer();
+    }
+  });
+
+  /* ---------------- Settings panel ---------------- */
+  var settingsPanel = document.getElementById("settingsPanel");
+  var settingsToggle = document.getElementById("settingsToggle");
+  settingsToggle.addEventListener("click", function(){
+    var open = settingsPanel.classList.toggle("open");
+    settingsToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) fillSettingsForm();
+  });
+  document.getElementById("settingsCancel").addEventListener("click", function(){
+    settingsPanel.classList.remove("open");
+    settingsToggle.setAttribute("aria-expanded","false");
+  });
+
+  function fillSettingsForm(){
+    document.getElementById("cfgFocus").value = config.focus;
+    document.getElementById("cfgShort").value = config.short;
+    document.getElementById("cfgLong").value = config.long;
+    document.getElementById("cfgCycle").value = config.cycle;
+    document.getElementById("cfgSound").checked = config.sound;
+    document.getElementById("cfgAuto").checked = config.auto;
+    document.getElementById("cfgNotify").checked = config.notify;
+  }
+
+  document.getElementById("settingsSave").addEventListener("click", function(){
+    config.focus = clampInt(document.getElementById("cfgFocus").value, 1, 90, DEFAULT_CONFIG.focus);
+    config.short = clampInt(document.getElementById("cfgShort").value, 1, 60, DEFAULT_CONFIG.short);
+    config.long = clampInt(document.getElementById("cfgLong").value, 1, 90, DEFAULT_CONFIG.long);
+    config.cycle = clampInt(document.getElementById("cfgCycle").value, 1, 12, DEFAULT_CONFIG.cycle);
+    config.sound = document.getElementById("cfgSound").checked;
+    config.auto = document.getElementById("cfgAuto").checked;
+    config.notify = document.getElementById("cfgNotify").checked;
+    if (config.notify && "Notification" in window && Notification.permission === "default"){
+      Notification.requestPermission();
+    }
+    storeSet("citadel:config", JSON.stringify(config));
+    pauseTimer();
+    setMode(mode, true);
+    settingsPanel.classList.remove("open");
+    settingsToggle.setAttribute("aria-expanded","false");
+  });
+
+  function clampInt(val, min, max, fallback){
+    var n = parseInt(val, 10);
+    if (isNaN(n)) return fallback;
+    return Math.max(min, Math.min(max, n));
+  }
+
+  /* ---------------- WOOP log ---------------- */
+  var woopEntries = [];
+  var todos = [];
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function escapeHtml(str){
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  function saveWoop(){ storeSet("citadel:woop", JSON.stringify(woopEntries)); }
+  function saveTodos(){ storeSet("citadel:todos", JSON.stringify(todos)); }
+
+  function renderWoopPreview(){
+    var obstacle = document.getElementById("woopObstacle").value.trim();
+    var action = document.getElementById("woopPlanAction").value.trim();
+    document.getElementById("woopPreview").textContent =
+      "If " + (obstacle || "…") + ", then I will " + (action || "…") + ".";
+  }
+
+  function renderWoopLog(){
+    var listEl = document.getElementById("woopLog");
+    if (!woopEntries.length){
+      listEl.innerHTML = '<p class="empty-note">No entries yet. Fill in a Wish above and save your first plan.</p>';
+      return;
+    }
+    var html = "";
+    woopEntries.slice().reverse().forEach(function(entry){
+      html += '<div class="woop-entry" data-id="' + entry.id + '">' +
+        '<div class="woop-entry-head"><span class="woop-entry-date">' + entry.date + '</span>' +
+        '<button class="entry-del" data-id="' + entry.id + '" aria-label="Delete entry">&times;</button></div>' +
+        '<p class="woop-entry-wish">' + escapeHtml(entry.wish) + '</p>' +
+        (entry.outcome ? '<p class="woop-entry-outcome">' + escapeHtml(entry.outcome) + '</p>' : '') +
+        '<p class="woop-entry-plan">If ' + escapeHtml(entry.obstacle || "…") + ', then I will ' + escapeHtml(entry.plan || "…") + '.</p>' +
+        '</div>';
+    });
+    listEl.innerHTML = html;
+    listEl.querySelectorAll(".entry-del").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.getAttribute("data-id");
+        woopEntries = woopEntries.filter(function(e){ return e.id !== id; });
+        saveWoop();
+        renderWoopLog();
+      });
+    });
+  }
+
+  document.getElementById("woopObstacle").addEventListener("input", renderWoopPreview);
+  document.getElementById("woopPlanAction").addEventListener("input", renderWoopPreview);
+  document.getElementById("woopSave").addEventListener("click", function(){
+    var wish = document.getElementById("woopWish").value.trim();
+    var outcome = document.getElementById("woopOutcome").value.trim();
+    var obstacle = document.getElementById("woopObstacle").value.trim();
+    var plan = document.getElementById("woopPlanAction").value.trim();
+    if (!wish){ document.getElementById("woopWish").focus(); return; }
+    if (!plan){ document.getElementById("woopPlanAction").focus(); return; }
+    woopEntries.push({id: uid(), date: todayStr(), wish: wish, outcome: outcome, obstacle: obstacle, plan: plan});
+    saveWoop();
+    renderWoopLog();
+    ["woopWish","woopOutcome","woopObstacle","woopPlanAction"].forEach(function(id){ document.getElementById(id).value = ""; });
+    renderWoopPreview();
+  });
+
+  /* ---------------- To-do ledger ---------------- */
+  function renderTodos(){
+    var listEl = document.getElementById("todoList");
+    var countEl = document.getElementById("todoCount");
+    if (!todos.length){
+      listEl.innerHTML = '<p class="empty-note">Nothing on the ledger yet.</p>';
+      countEl.textContent = "";
+      return;
+    }
+    var doneCount = todos.filter(function(t){ return t.done; }).length;
+    countEl.textContent = doneCount + " of " + todos.length + " done";
+    var html = "";
+    todos.forEach(function(item){
+      html += '<div class="todo-item' + (item.done ? ' done' : '') + '" data-id="' + item.id + '">' +
+        '<label class="todo-check"><input type="checkbox" ' + (item.done ? 'checked' : '') + ' data-id="' + item.id + '"><span class="todo-box"></span></label>' +
+        '<span class="todo-text">' + escapeHtml(item.text) + '</span>' +
+        '<button class="entry-del" data-id="' + item.id + '" aria-label="Delete task">&times;</button>' +
+        '</div>';
+    });
+    listEl.innerHTML = html;
+    listEl.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
+      cb.addEventListener("change", function(){
+        var id = cb.getAttribute("data-id");
+        todos = todos.map(function(t){ if (t.id === id) t.done = cb.checked; return t; });
+        saveTodos();
+        renderTodos();
+      });
+    });
+    listEl.querySelectorAll(".entry-del").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.getAttribute("data-id");
+        todos = todos.filter(function(t){ return t.id !== id; });
+        saveTodos();
+        renderTodos();
+      });
+    });
+  }
+
+  function addTodo(){
+    var input = document.getElementById("todoInput");
+    var text = input.value.trim();
+    if (!text) return;
+    todos.push({id: uid(), text: text, done: false});
+    input.value = "";
+    saveTodos();
+    renderTodos();
+  }
+  document.getElementById("todoAddBtn").addEventListener("click", addTodo);
+  document.getElementById("todoInput").addEventListener("keydown", function(e){
+    if (e.key === "Enter"){ e.preventDefault(); addTodo(); }
+  });
+  document.getElementById("todoClearDone").addEventListener("click", function(){
+    todos = todos.filter(function(t){ return !t.done; });
+    saveTodos();
+    renderTodos();
+  });
+
+  /* ---------------- Top clock ---------------- */
+  function updateClock(){
+    var d = new Date();
+    var hh = String(d.getHours()).padStart(2, "0");
+    var mm = String(d.getMinutes()).padStart(2, "0");
+    var ss = String(d.getSeconds()).padStart(2, "0");
+    document.getElementById("clockTime").textContent = hh + ":" + mm + ":" + ss;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ---------------- Init ---------------- */
+  function init(){
+    renderQuote();
+    renderTab("lofi");
+    renderWoopPreview();
+    Promise.all([storeGet("citadel:config"), storeGet("citadel:stats"), storeGet("citadel:woop"), storeGet("citadel:todos")]).then(function(results){
+      var savedConfig = results[0], savedStats = results[1], savedWoop = results[2], savedTodos = results[3];
+      if (savedWoop){ try { woopEntries = JSON.parse(savedWoop) || []; } catch(e){} }
+      if (savedTodos){ try { todos = JSON.parse(savedTodos) || []; } catch(e){} }
+      if (savedConfig){
+        try { config = Object.assign({}, DEFAULT_CONFIG, JSON.parse(savedConfig)); } catch(e){}
+      }
+      if (savedStats){
+        try {
+          var parsed = JSON.parse(savedStats);
+          var today = todayStr();
+          if (parsed.todayDate === today){
+            stats = parsed;
+          } else {
+            stats.totalSessions = parsed.totalSessions || 0;
+            stats.streak = parsed.streak || 0;
+            stats.lastActiveDate = parsed.lastActiveDate || null;
+            stats.todayDate = today;
+            stats.sessionsToday = 0;
+          }
+        } catch(e){}
+      } else {
+        stats.todayDate = todayStr();
+      }
+      setMode("focus", true);
+      renderStats();
+      renderWoopLog();
+      renderTodos();
+    });
+  }
+  init();
+
+})();
+</script>
+</body>
+</html>

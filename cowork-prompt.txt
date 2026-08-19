@@ -1,0 +1,23 @@
+I have a Tauri desktop app project in this folder called citadel-tauri/
+that needs to be built into a native macOS app. Everything is already
+scaffolded — no code needs to be written from scratch. Please:
+
+1. Check whether Rust is installed (`rustc --version`). If not, install
+   it via rustup (https://rustup.rs) and confirm it's on PATH.
+2. Check whether Xcode command line tools are installed
+   (`xcode-select -p`). If not, run `xcode-select --install` and let me
+   know if it needs me to click through a GUI installer.
+3. cd into citadel-tauri/ and run `npm install`.
+4. Generate the app icon set from icon-source.png:
+   `npm run tauri icon icon-source.png`
+5. Run `npm run tauri dev` first so I can sanity-check the app opens
+   correctly in a window before doing a full build.
+6. Once I confirm it looks right, run `npm run tauri build` to produce
+   the final .app and .dmg.
+7. Tell me exactly where the finished .app and .dmg end up
+   (should be under src-tauri/target/release/bundle/).
+
+If any step fails, show me the actual error output rather than
+summarizing it, so we can fix it together. PROJECT-BRIEF.md in this
+folder has the full design brief and decisions behind the app if you
+need context; README.md has the literal build commands.
