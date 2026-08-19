@@ -17,10 +17,13 @@ jobs:
         include:
           - platform: macos-latest
             name: macos
+            args: ""
           - platform: ubuntu-22.04
             name: linux
+            args: "--bundles deb,appimage"
           - platform: windows-latest
             name: windows
+            args: ""
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -54,6 +57,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          args: ${{ matrix.args }}
           tagName: ${{ github.ref_name }}
           releaseName: "Citadel ${{ github.ref_name }}"
           releaseBody: "Download the installer for your platform below: .dmg (macOS), .AppImage or .deb (Linux), .msi (Windows)."
